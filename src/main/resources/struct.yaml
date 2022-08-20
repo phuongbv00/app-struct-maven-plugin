@@ -1,0 +1,20 @@
+- name: configs
+- name: data
+  children:
+    - name: domains
+    - name: dto
+    - name: enums
+    - name: mappers
+    - name: repos
+      children:
+        - name: custom
+        - name: impl
+    - name: seeders
+- name: services
+  children:
+    - name: impl
+- name: utils
+- name: web
+  children:
+    - name: api
+    - name: filters
