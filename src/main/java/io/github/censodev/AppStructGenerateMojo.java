@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -30,42 +29,36 @@ public class AppStructGenerateMojo extends AbstractMojo {
     MavenProject project;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() throws MojoFailureException {
         Path basePath = Paths.get(project.getBasedir().getPath())
                 .resolve("src")
                 .resolve("main")
                 .resolve("java")
-                .resolve(project.getGroupId().replace("\\.", File.separator))
+                .resolve(project.getGroupId().replace(".", File.separator))
                 .resolve(project.getArtifactId().replace("-", "").toLowerCase());
         try {
             generate(basePath, loadStruct());
-        } catch (Exception e) {
-            getLog().error(e);
+        } catch (IOException e) {
             throw new MojoFailureException(e);
         }
     }
 
     private List<Struct> loadStruct() throws IOException {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         ObjectMapper om = new ObjectMapper(new YAMLFactory());
         CollectionType typeRef = TypeFactory.defaultInstance()
                 .constructCollectionType(ArrayList.class, Struct.class);
-        return om.readValue(classLoader.getResource("struct.yaml"), typeRef);
+        return om.readValue(getClass().getClassLoader().getResource("struct.yaml"), typeRef);
     }
 
-    private void generate(Path basePath, List<Struct> structs) {
-        structs.forEach(struct -> {
+    private void generate(Path basePath, List<Struct> structs) throws IOException {
+        if (structs == null)
+            return;
+        for (Struct struct : structs) {
             Path path = basePath.resolve(struct.getName());
-            try {
-                Files.createDirectory(path);
-                Files.createFile(path.resolve(".gitkeep"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            if (struct.getChildren() != null || !struct.getChildren().isEmpty()) {
-                generate(path, struct.getChildren());
-            }
-        });
+            Files.createDirectories(path);
+            Files.createFile(path.resolve(".gitkeep"));
+            generate(path, struct.getChildren());
+        }
     }
 
     @Getter
