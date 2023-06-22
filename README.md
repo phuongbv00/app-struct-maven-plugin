@@ -27,5 +27,5 @@ A plugin helps you generate initial application structure.
 ## 2. Usage
 
 ```shell
-mvn io.github.censodev:app-struct:generate
+mvn io.github.censodev:app-struct-maven-plugin:generate
 ```
